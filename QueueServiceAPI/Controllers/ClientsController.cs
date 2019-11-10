@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetAllClients()
         {
+            Thread.Sleep(10 * 1000);
             var response = await (from empl in _context.Clients
                                   orderby empl.Fio ascending
                                   select new
@@ -36,6 +38,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetEmployee(string fio)
         {
+            Thread.Sleep(10 * 1000);
             var clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (clients == null)
@@ -56,6 +59,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetClients(string fio)
         {
+            Thread.Sleep(10 * 1000);
             if (fio is null || fio == "") return await GetAllClients();
             else return await GetEmployee(fio);
         }
@@ -65,6 +69,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<string>> GetClients(int id)
         {
+            Thread.Sleep(10 * 1000);
             var clients = await _context.Clients.FindAsync(id);
 
             if (clients == null)
@@ -84,8 +89,9 @@ namespace QueueServiceAPI.Controllers
         // POST: api/Clients
         // добавить нового сотрудника
         [HttpPost]
-        public async Task<ActionResult<string>> PostClients(Clients clients)
+        public async Task<ActionResult<string>> PostClients([FromBody]Clients clients)
         {
+            Thread.Sleep(10 * 1000);
             _context.Clients.Add(clients);
             await _context.SaveChangesAsync();
 
@@ -95,10 +101,11 @@ namespace QueueServiceAPI.Controllers
 
 
         // POST: api/Clients
-        // добавить нового сотрудника
+        // авторизация
         [HttpPost("auth")]
-        public async Task<ActionResult<string>> Auth(Clients clients)
+        public async Task<ActionResult<string>> Auth([FromBody]Clients clients)
         {
+            Thread.Sleep(10 * 1000);
             if (await _context.Clients.AnyAsync(x => x.Fio == clients.Fio))
                 return await GetEmployee(fio: clients.Fio);
             else

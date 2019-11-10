@@ -9,7 +9,6 @@ using Xunit;
 
 namespace QueueServiceAPI.Tests
 {
-    //TODO: написать тесты для очередей
     public class QueuesTests
     {
         private readonly TestServer _server;
@@ -21,33 +20,110 @@ namespace QueueServiceAPI.Tests
             _client = _server.CreateClient();
         }
 
+        //получение информации об очередях
         [Fact]
-        public async Task GetUsers()
+        public async Task GetQueues()
         {
             //array
-            var name = "евсей";
-            var id = 1;
+            var id = 4;
+            var fio = "евсей";
 
             //act
-            //all
-            var response1 = await _client.GetAsync("/api/clients");
+            var response1 = await _client.GetAsync("/api/queues");
             var responseContent1 = await response1.Content.ReadAsStringAsync();
-            //by name
-            var response2 = await _client.GetAsync("/api/clients/?fio=" + name);
-            var responseContent2 = await response2.Content.ReadAsStringAsync();
-            //by id
-            var response3 = await _client.GetAsync("/api/clients/" + id);
-            var responseContent3 = await response3.Content.ReadAsStringAsync();
+
+            //assert
+            response1.EnsureSuccessStatusCode();
+            Assert.Contains($"{{\"recid\":{id},\"fio\":\"{fio}\",\"competing\":true}}", responseContent1);
+        }
+
+        [Fact]
+        public async Task Enqueue()
+        {
+            //array
+            var fio1 = "евсей";
+            var fio2 = "другойевсей";
+            var competing = true;
+            var notcompeting = true;
+
+            //act
+            var response1 = await _client.PostAsync(
+               requestUri: $"/api/queues/?c={competing}",
+               content: new StringContent(
+                   content: $"\"{fio1}\"",
+                   encoding: Encoding.UTF8,
+                   mediaType: "application/json"
+               ));
+            var response2 = await _client.PostAsync(
+               requestUri: $"/api/queues/?c={notcompeting}",
+               content: new StringContent(
+                   content: $"\"{fio2}\"",
+                   encoding: Encoding.UTF8,
+                   mediaType: "application/json"
+               ));
 
 
             //assert
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
-            response3.EnsureSuccessStatusCode();
-            Assert.Contains($"{{\"id\":{id},\"fio\":\"{name}\"}}", responseContent1);
-            Assert.Contains($"{{\"id\":{id},\"fio\":\"{name}\"}}", responseContent2);
-            Assert.Contains($"{{\"id\":{id},\"fio\":\"{name}\"}}", responseContent3);
+        }
 
+        [Fact]
+        public async Task PickFromQueue()
+        {
+            //array
+            var empoyeeid = 1;
+            var queueid = 4;
+
+            //act
+            var response1 = await _client.PostAsync(
+               requestUri: $"/api/queues/{queueid}",
+               content: new StringContent(
+                   content: $"{empoyeeid}",
+                   encoding: Encoding.UTF8,
+                   mediaType: "application/json"
+               ));
+
+            //assert
+            response1.EnsureSuccessStatusCode();
+        }
+        [Fact]
+        public async Task PickNextFromQueue()
+        {
+            //array
+            var empoyeeid = 1;
+
+            //act
+            var response1 = await _client.PostAsync(
+               requestUri: $"/api/queues/next",
+               content: new StringContent(
+                   content: $"{empoyeeid}",
+                   encoding: Encoding.UTF8,
+                   mediaType: "application/json"
+               ));
+
+            //assert
+            response1.EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task ClientIsHandled()
+        {
+            //array
+            var empoyeeid = 1;
+            var queueid = 4;
+
+            //act
+            var response1 = await _client.PostAsync(
+               requestUri: $"/api/queues/{queueid}/handled",
+               content: new StringContent(
+                   content: $"{empoyeeid}",
+                   encoding: Encoding.UTF8,
+                   mediaType: "application/json"
+               ));
+
+            //assert
+            response1.EnsureSuccessStatusCode();
         }
 
     }

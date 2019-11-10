@@ -7,6 +7,7 @@ namespace QueueServiceAPI
     {
         public int Id { get; set; }
         public bool Competing { get; set; }
+        public bool Handled { get; set; }
         public int Clientid { get; set; }
         public int Employeeid { get; set; }
         public DateTime Created { get; set; }

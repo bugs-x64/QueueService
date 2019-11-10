@@ -83,6 +83,8 @@ namespace QueueServiceAPI
 
                 entity.Property(e => e.Competing).HasColumnName("competing");
 
+                entity.Property(e => e.Handled).HasColumnName("handled");
+
                 entity.Property(e => e.Created)
                     .HasColumnName("created")
                     .HasColumnType("datetime")

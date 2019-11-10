@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <server address="https://qservice124.azurewebsites.net/"></server>
+  <sleep seconds="2"></sleep>
+</root>
