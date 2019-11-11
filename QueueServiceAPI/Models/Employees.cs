@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace QueueServiceAPI
+namespace QueueServiceAPI.Models
 {
     public partial class Employees
     {

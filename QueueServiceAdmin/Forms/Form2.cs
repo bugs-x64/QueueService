@@ -23,9 +23,12 @@ namespace QueueServiceAdmin
         {
             _form.EmplName = textBox1.Text;
             _form.Text += " " + textBox1.Text;
-            _form.Visible = true;
-            _form.Focus();
-            this.Close();
+            Close();
+        }
+
+        private void Form2_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

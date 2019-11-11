@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 
-namespace QueueServiceAPI
+namespace QueueServiceAPI.Models
 {
     public partial class qsdbContext : DbContext
     {

@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using QueueServiceAPI;
+using Microsoft.AspNetCore.SignalR;
+using QueueServiceAPI.Models;
 
 namespace QueueServiceAPI.Controllers
 {
@@ -82,7 +83,7 @@ namespace QueueServiceAPI.Controllers
 
         // PUT: api/Queues/5
         // сотрудник забирает клиента из очереди
-        [HttpPost("{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> PickClient(int id, [FromBody] int employeeid)
         {
             Thread.Sleep(10 * 1000);
@@ -115,7 +116,7 @@ namespace QueueServiceAPI.Controllers
 
         // PUT: api/Queues/5/handled
         // сотрудник отмечает, что клиент обслужен
-        [HttpPost("{id}/handled")]
+        [HttpPut("{id}/handled")]
         public async Task<IActionResult> ClientisHandled(int id, [FromBody] int employeeid)
         {
             Thread.Sleep(10 * 1000);

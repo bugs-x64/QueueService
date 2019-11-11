@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using QueueServiceAPI;
+using QueueServiceAPI.Models;
 
 namespace QueueServiceAPI.Controllers
 {

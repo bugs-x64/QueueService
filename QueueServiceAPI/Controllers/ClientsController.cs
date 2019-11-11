@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using QueueServiceAPI;
+using QueueServiceAPI.Models;
 
 namespace QueueServiceAPI.Controllers
 {
@@ -36,7 +36,7 @@ namespace QueueServiceAPI.Controllers
             return JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
-        private async Task<ActionResult<string>> GetEmployee(string fio)
+        private async Task<ActionResult<string>> GetClient(string fio)
         {
             Thread.Sleep(10 * 1000);
             var clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
@@ -61,7 +61,7 @@ namespace QueueServiceAPI.Controllers
         {
             Thread.Sleep(10 * 1000);
             if (fio is null || fio == "") return await GetAllClients();
-            else return await GetEmployee(fio);
+            else return await GetClient(fio);
         }
 
         // GET: api/Clients/5
@@ -107,7 +107,7 @@ namespace QueueServiceAPI.Controllers
         {
             Thread.Sleep(10 * 1000);
             if (await _context.Clients.AnyAsync(x => x.Fio == clients.Fio))
-                return await GetEmployee(fio: clients.Fio);
+                return await GetClient(fio: clients.Fio);
             else
                 return await PostClients(clients); ;
             //return CreatedAtAction("GetClients", new { id = clients.Id }, clients);
