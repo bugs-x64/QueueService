@@ -50,7 +50,7 @@ namespace QueueServiceAPI
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<QueuesHub>("/chat");
+                routes.MapHub<QueuesHub>("/queues/signalr");
             });
         }
     }

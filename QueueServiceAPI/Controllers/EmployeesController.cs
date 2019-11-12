@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using QueueServiceAPI.Models;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace QueueServiceAPI.Controllers
 {
@@ -29,8 +26,8 @@ namespace QueueServiceAPI.Controllers
                                   orderby empl.Fio ascending
                                   select new
                                   {
-                                     id =  empl.Id,
-                                     fio =  empl.Fio
+                                      id = empl.Id,
+                                      fio = empl.Fio
                                   }
                          ).ToListAsync();
             return JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.None });
@@ -39,7 +36,7 @@ namespace QueueServiceAPI.Controllers
         private async Task<ActionResult<string>> GetEmployee(string fio)
         {
             Thread.Sleep(10 * 1000);
-            var employees = await _context.Employees.FirstOrDefaultAsync(x => x.Fio == fio);
+            Employees employees = await _context.Employees.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (employees == null)
             {
@@ -48,8 +45,8 @@ namespace QueueServiceAPI.Controllers
 
             return JsonConvert.SerializeObject(new
             {
-               id = employees.Id,
-               fio = employees.Fio
+                id = employees.Id,
+                fio = employees.Fio
             },
             new JsonSerializerSettings { Formatting = Formatting.None });
         }
@@ -60,8 +57,14 @@ namespace QueueServiceAPI.Controllers
         public async Task<ActionResult<string>> GetEmployees(string fio)
         {
             Thread.Sleep(10 * 1000);
-            if (fio is null || fio == "") return await GetAllEmployees();
-            else return await GetEmployee(fio);
+            if (fio is null || fio == "")
+            {
+                return await GetAllEmployees();
+            }
+            else
+            {
+                return await GetEmployee(fio);
+            }
         }
 
         // GET: api/Employees/5
@@ -70,7 +73,7 @@ namespace QueueServiceAPI.Controllers
         public async Task<ActionResult<string>> GetEmployees(int id)
         {
             Thread.Sleep(10 * 1000);
-            var employees = await _context.Employees.FindAsync(id);
+            Employees employees = await _context.Employees.FindAsync(id);
 
             if (employees == null)
             {
@@ -107,9 +110,13 @@ namespace QueueServiceAPI.Controllers
         {
             Thread.Sleep(10 * 1000);
             if (await _context.Employees.AnyAsync(x => x.Fio == employees.Fio))
+            {
                 return await GetEmployee(fio: employees.Fio);
+            }
             else
-                return await PostEmployees(employees); ;
+            {
+                return await PostEmployees(employees);
+            };
             //return CreatedAtAction("GetEmployees", new { id = employees.Id }, employees);
         }
     }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using QueueServiceAPI.Models;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace QueueServiceAPI.Controllers
 {
@@ -39,7 +36,7 @@ namespace QueueServiceAPI.Controllers
         private async Task<ActionResult<string>> GetClient(string fio)
         {
             Thread.Sleep(10 * 1000);
-            var clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Clients clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (clients == null)
             {
@@ -60,8 +57,14 @@ namespace QueueServiceAPI.Controllers
         public async Task<ActionResult<string>> GetClients(string fio)
         {
             Thread.Sleep(10 * 1000);
-            if (fio is null || fio == "") return await GetAllClients();
-            else return await GetClient(fio);
+            if (fio is null || fio == "")
+            {
+                return await GetAllClients();
+            }
+            else
+            {
+                return await GetClient(fio);
+            }
         }
 
         // GET: api/Clients/5
@@ -70,7 +73,7 @@ namespace QueueServiceAPI.Controllers
         public async Task<ActionResult<string>> GetClients(int id)
         {
             Thread.Sleep(10 * 1000);
-            var clients = await _context.Clients.FindAsync(id);
+            Clients clients = await _context.Clients.FindAsync(id);
 
             if (clients == null)
             {
@@ -107,9 +110,13 @@ namespace QueueServiceAPI.Controllers
         {
             Thread.Sleep(10 * 1000);
             if (await _context.Clients.AnyAsync(x => x.Fio == clients.Fio))
+            {
                 return await GetClient(fio: clients.Fio);
+            }
             else
-                return await PostClients(clients); ;
+            {
+                return await PostClients(clients);
+            };
             //return CreatedAtAction("GetClients", new { id = clients.Id }, clients);
         }
     }

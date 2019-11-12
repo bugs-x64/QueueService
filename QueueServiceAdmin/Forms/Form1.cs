@@ -1,24 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.SignalR.Client;
+using QueueServiceAdmin.Main;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using QueueServiceAdmin.Main;
 
 namespace QueueServiceAdmin
 {
     public partial class Form1 : Form
     {
+        private HubConnection _connection;
         private readonly Settings _settings;
-        private bool _waiting;
-        public string EmplName { get { return _emplName; } set { _emplName = value ?? "Петя"; } }
+        public string EmplName { get => _emplName; set => _emplName = value ?? "Петя"; }
         private string _emplName;
+        private readonly string _headofCaptions = "Сообщение сотруднику";
 
         public Form1()
         {
@@ -40,73 +34,122 @@ namespace QueueServiceAdmin
         private void Form1_Load(object sender, EventArgs e)
         {
             Visible = false;
-            var form = new Form2(this);
+            Form2 form = new Form2(this);
             form.ShowDialog();
             form.Dispose();
             Visible = true;
+            Connect();
         }
 
         //забрать из неконкурирующей очереди
-        private void Button1_Click(object sender, EventArgs e)
+        private async void Button1_Click(object sender, EventArgs e)
         {
-            button1.Enabled = false;
-            button2.Enabled = false;
-            _waiting = true;
-            QueueWebMethods.GetNextAsync(_settings.ServerAddress,EmplName);
+            SwitchControls(false);
+            await _connection.SendAsync("GetNext", 1);
         }
 
         //забрать из конкурирующей очереди
-        private void Button2_Click(object sender, EventArgs e)
+        private async void Button2_Click(object sender, EventArgs e)
         {
-            button1.Enabled = false;
-            button2.Enabled = false;
-            QueueWebMethods.GetConcurAsync(_settings.ServerAddress, EmplName, (QueueRecord)listBox2.Items[listBox2.SelectedIndex]);
+            if(listBox2.SelectedIndex == -1) return;
+            SwitchControls(false);
+            var recid = ((QueueRecord)listBox2.Items[listBox2.SelectedIndex]).RecId;
+            await _connection.SendAsync("GetSelected", recid, 1);
         }
 
-        //метод срабатывает, если сотрудник выбирает клиента из конкурирующего списка
+        //вызов метода происходит, если сотрудник выбирает посетителя из конкурирующего списка
         private void ListBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (listBox2.SelectedIndex == -1 || _waiting)
-            {
-                button2.Enabled = false;
-                return;
-            }
-            button2.Enabled = true;
+            button2.Enabled = listBox2.SelectedIndex != -1;
         }
 
-        void Sort(List<QueueRecord> recordsAll)
+        /// <summary>
+        /// Метод сортирует данные, полученные с сервера, по типу очереди
+        /// </summary>
+        /// <param name="recordsAll">список с данными об ожидающих посетителях</param>
+        private void Sort(List<QueueRecord> recordsAll)
         {
-            Invoke(new MethodInvoker(delegate
+            listBox1.Items.Clear();
+            listBox2.Items.Clear();
+
+            foreach (QueueRecord record in recordsAll)
             {
-                listBox1.Items.Clear();
-                listBox2.Items.Clear();
-            }));
-            foreach (var record in recordsAll)
                 if (!record.Competing)
-                    listBox1.Invoke(new MethodInvoker(delegate { listBox1.Items.Add(record); }));
+                {
+                    listBox1.Items.Add(record);
+                }
                 else
-                    listBox2.Invoke(new MethodInvoker(delegate { listBox2.Items.Add(record); }));
+                {
+                    listBox2.Items.Add(record);
+                }
+            }
 
-            if (_waiting) return;
-
-            Invoke(new MethodInvoker(delegate
-            {
-                button1.Enabled = listBox1.Items.Count > 0;
-            }));
+            button1.Enabled = listBox1.Items.Count > 0;
         }
 
+        /// <summary>
+        /// метод выполняет подключение к веб серверу
+        /// </summary>
+        private async void Connect()
+        {
+            SwitchControls(false);
+            //настраиваем подключение
+            _connection = new HubConnectionBuilder()//настраиваем подключение
+                .WithUrl($"{_settings.ServerAddress}/queues/signalr")
+                .Build();
 
-        //private async void LoopAsync()
-        //{
-        //    using (var client = new MyWebClient())
-        //        while (true)
-        //        {
-        //            var response1 = await client.GetAsync(new Uri(_settings.ServerAddress + "/api/queues"));
-        //            var responseContent1 = await response1.Content.ReadAsStringAsync();
-        //            var recordsAll = JsonConvert.DeserializeObject<List<QueueRecord>>(responseContent1);
-        //            await Task.Run(() => Sort(recordsAll));
-        //            Thread.Sleep(_settings.SleepTime * 1000);
-        //        }
-        //}
+            //определяем методы клиента SignalR
+            _connection.On<bool, QueueRecord>("RequestResult", (x, y) => RequestResult(x, y));
+            _connection.On<List<QueueRecord>>("QueuesUpdate", (x) => Sort(x));
+
+            try
+            {
+                await _connection.StartAsync();
+                await _connection.SendAsync("GetQueues",false)
+                    .ContinueWith(delegate { SwitchControls(true); });
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "Ошибка подключения к серверу, перезапустите приложение");
+            }
+        }
+
+        /// <summary>
+        /// Метод уведомляет пользователя об успехе выполнения методов сервера
+        /// </summary>
+        /// <param name="success"></param>
+        /// <param name="record"></param>
+        private void RequestResult(bool success, QueueRecord record)
+        {
+            if (success)
+            {
+                MessageBox
+                    .Show(
+                    text: $"{EmplName}\r\nВы успешно забрали клиента!\r\n{record.Fio}",
+                    caption: _headofCaptions);
+            }
+            else
+            {
+                MessageBox
+                    .Show(
+                    text: EmplName + "\r\nПроизошла ошибка, повторите попытку позже!",
+                    caption: _headofCaptions);
+            }
+
+            SwitchControls(true);
+        }
+
+        /// <summary>
+        /// Метод переключает активность элементов управления пользовательского интерфейса
+        /// </summary>
+        /// <param name="enabled">true - элементы UI активны, false - элементы UI неактивны. </param>
+        private void SwitchControls(bool enabled)
+        {
+            button1.Enabled = enabled ? listBox1.Items.Count > 0 : false;
+            button2.Enabled = enabled ? listBox2.SelectedIndex != -1 : false;
+            listBox1.Enabled = enabled;
+            listBox2.Enabled = enabled;
+            Text = enabled ? $"Приложение для сотрудника {EmplName}" : "Ожидание...";
+        }
     }
 }

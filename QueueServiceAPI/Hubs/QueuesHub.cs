@@ -1,43 +1,60 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using QueueServiceAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.SignalR;
-using QueueServiceAPI.Models;
 
 namespace QueueServiceAPI.Hubs
 {
-    public class QueuesHub:Hub
+    public class QueuesHub : Hub
     {
         private readonly qsdbContext _context;
         public QueuesHub()
         {
             _context = new qsdbContext();
         }
-   
+
         /// <summary>
-        /// Получить список клиентов в очереди
+        /// Получить список клиентов в очереди из БД
         /// </summary>
         /// <returns></returns>
-        public async Task GetQueues()
+        private async Task<List<QueueRecord>> GetQueuesData()
         {
-            Thread.Sleep(10 * 1000);
-            var response = await (from record in _context.Queues
-                                  join client in _context.Clients on record.Clientid equals client.Id
-                                  where record.Employeeid == 0
-                                  select new QueueRecord()
-                                  {
-                                      RecId = record.Id,
-                                      Fio = client.Fio,
-                                      Competing = record.Competing
-                                  }
+            return await (from record in _context.Queues
+                                                join client in _context.Clients on record.Clientid equals client.Id
+                                                where record.Employeeid == 0
+                                                select new QueueRecord()
+                                                {
+                                                    RecId = record.Id,
+                                                    Fio = client.Fio,
+                                                    Competing = record.Competing
+                                                }
                                  ).ToListAsync();
-            await Clients.Caller.SendAsync("SetQueues", response);
+        }
+
+        /// <summary>
+        /// Отправить список клиентов в очереди. Если (all == true) список отправится всем подключенным клиентам
+        /// </summary>
+        /// <param name="all"></param>
+        /// <returns></returns>
+        public async Task GetQueues(bool all)
+        {
+            if (all)
+                await Clients.All.SendAsync("QueuesUpdate", GetQueuesData());
+            else
+            {
+                /* ============================================================
+                 * В данном методе задержка стоит только здесь
+                 * т.к. all == true используется только при вызове других методов. 
+                 * Если оставить в начале выполнения метода, 
+                 * то другие методы будут выполняться 20 секунд
+                 * ============================================================
+                 */
+                Thread.Sleep(10 * 1000);
+                await Clients.Caller.SendAsync("QueuesUpdate", GetQueuesData());
+            }
         }
 
         /// <summary>
@@ -45,7 +62,7 @@ namespace QueueServiceAPI.Hubs
         /// </summary>
         /// <param name="employeeid">id сотрудника</param>
         /// <returns></returns>
-        public async Task<QueueRecord> GetNext(int employeeid)
+        public async Task GetNext(int employeeid)
         {
             Thread.Sleep(10 * 1000);
             var datalist = await (from record in _context.Queues
@@ -58,12 +75,16 @@ namespace QueueServiceAPI.Hubs
                                       record
                                   }).ToListAsync();
 
-            if (datalist.Count == 0) return null;
+            if (datalist.Count == 0)
+            {
+                await Clients.Caller.SendAsync("RequestResult", false, null);
+                return;
+            }
 
             var result = datalist[0];
             result.record.Employeeid = employeeid;
             _context.Entry(result.record).State = EntityState.Modified;
-            
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -73,12 +94,13 @@ namespace QueueServiceAPI.Hubs
                 throw;
             }
 
-            return new QueueRecord()
+            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecord()
             {
                 RecId = result.record.Id,
                 Fio = result.client.Fio,
                 Competing = result.record.Competing
-            };                       
+            });
+            await GetQueues(true);
         }
 
 
@@ -88,17 +110,27 @@ namespace QueueServiceAPI.Hubs
         /// <param name="clientid">id клиента</param>
         /// <param name="employeeid">id сотрудника</param>
         /// <returns></returns>
-        public async Task<bool> PickClient(int clientid, int employeeid)
+        public async Task GetSelected(int recordid, int employeeid)
         {
             Thread.Sleep(10 * 1000);
-            if (!QueuesExists(clientid))
+            if (!QueuesExists(recordid))
             {
-                return false;
+                await Clients.Caller.SendAsync("RequestResult", false, null);
+                return;
             }
 
-            var record = await _context.Queues.FindAsync(clientid);
-            record.Employeeid = employeeid;
-            _context.Entry(record).State = EntityState.Modified;
+            var result = await (from record in _context.Queues
+                                join client in _context.Clients on record.Clientid equals client.Id
+                                where record.Id == recordid
+                                select new
+                                {
+                                    record,
+                                    client
+                                }
+                                 ).FirstAsync();
+
+            result.record.Employeeid = employeeid;
+            _context.Entry(result.record).State = EntityState.Modified;
 
             try
             {
@@ -106,9 +138,9 @@ namespace QueueServiceAPI.Hubs
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!QueuesExists(clientid))
+                if (!QueuesExists(recordid))
                 {
-                    return false;
+                    return;
                 }
                 else
                 {
@@ -116,21 +148,31 @@ namespace QueueServiceAPI.Hubs
                 }
             }
 
-            return true;
+            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecord()
+            {
+                RecId = result.record.Id,
+                Fio = result.client.Fio,
+                Competing = result.record.Competing
+            });
+            await GetQueues(true);
         }
-        
+
         /// <summary>
         /// Метод возвращает true, если клиент успешно записан в очередь
         /// </summary>
         /// <param name="fio"></param>
         /// <param name="c"></param>
         /// <returns></returns>
-        public async Task<bool> PostQueues(string fio, bool c)
+        public async Task CreateRecord(string fio, bool c)
         {
             Thread.Sleep(10 * 1000);
-            if (fio == "" || fio is null) return false;
+            if (fio == "" || fio is null)
+            {
+                await Clients.Caller.SendAsync("SendingStatus", false);
+                return;
+            }
 
-            var client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Clients client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (client is null)
             {
@@ -138,12 +180,13 @@ namespace QueueServiceAPI.Hubs
                 _context.Clients.Add(client);
             }
 
-            var queues = new Queues() { Client = client, Competing = c };
+            Queues queues = new Queues() { Client = client, Competing = c };
 
             _context.Queues.Add(queues);
             await _context.SaveChangesAsync();
 
-            return true;
+            await Clients.Caller.SendAsync("SendingStatus", true);
+            await GetQueues(true);
         }
 
 

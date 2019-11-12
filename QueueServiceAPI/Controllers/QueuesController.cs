@@ -1,14 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using QueueServiceAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.SignalR;
-using QueueServiceAPI.Models;
 
 namespace QueueServiceAPI.Controllers
 {
@@ -57,7 +54,11 @@ namespace QueueServiceAPI.Controllers
                                       client,
                                       record
                                   }).ToListAsync();
-            if (datalist.Count == 0) return NotFound();
+            if (datalist.Count == 0)
+            {
+                return NotFound();
+            }
+
             var result = datalist[0];
             result.record.Employeeid = employeeid;
             _context.Entry(result.record).State = EntityState.Modified;
@@ -67,7 +68,7 @@ namespace QueueServiceAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                    throw;
+                throw;
             }
 
             var response = new
@@ -91,7 +92,7 @@ namespace QueueServiceAPI.Controllers
             {
                 return NotFound();
             }
-            var record = await _context.Queues.FindAsync(id);
+            Queues record = await _context.Queues.FindAsync(id);
             record.Employeeid = employeeid;
             _context.Entry(record).State = EntityState.Modified;
 
@@ -124,7 +125,7 @@ namespace QueueServiceAPI.Controllers
             {
                 return NotFound();
             }
-            var record = await _context.Queues.FindAsync(id);
+            Queues record = await _context.Queues.FindAsync(id);
             record.Employeeid = employeeid;
             record.Handled = true;
             _context.Entry(record).State = EntityState.Modified;
@@ -153,18 +154,21 @@ namespace QueueServiceAPI.Controllers
         public async Task<IActionResult> PostQueues([FromBody] string fio, bool c)
         {
             Thread.Sleep(10 * 1000);
-            if (fio == "" || fio is null) return BadRequest();
+            if (fio == "" || fio is null)
+            {
+                return BadRequest();
+            }
 
-            var client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Clients client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
-            if( client is null)
+            if (client is null)
             {
                 client = new Clients() { Fio = fio };
                 _context.Clients.Add(client);
             }
 
-            var queues = new Queues() { Client = client, Competing = c};
-            
+            Queues queues = new Queues() { Client = client, Competing = c };
+
             _context.Queues.Add(queues);
             await _context.SaveChangesAsync();
 
