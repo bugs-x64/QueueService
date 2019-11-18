@@ -48,7 +48,7 @@ namespace QueueServiceAPI.Tests
             //assert
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
-            Assert.Equal($"{{\"id\":1,\"fio\":\"{existuser}\"}}", responseContent1);
+            Assert.Contains($"{{\"id\":1,\"fio\":\"{existuser}\"", responseContent1);
             Assert.Contains($"\"fio\":\"{noexistuser}\"", responseContent2);
         }
 

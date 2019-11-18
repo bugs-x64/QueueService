@@ -2,6 +2,7 @@
 using QueueServiceAdmin.Main;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Windows.Forms;
 
 namespace QueueServiceAdmin
@@ -51,7 +52,7 @@ namespace QueueServiceAdmin
         //забрать из конкурирующей очереди
         private async void Button2_Click(object sender, EventArgs e)
         {
-            if(listBox2.SelectedIndex == -1) return;
+            if (listBox2.SelectedIndex == -1) return;
             SwitchControls(false);
             var recid = ((QueueRecord)listBox2.Items[listBox2.SelectedIndex]).RecId;
             await _connection.SendAsync("GetSelected", recid, 1);
@@ -69,22 +70,25 @@ namespace QueueServiceAdmin
         /// <param name="recordsAll">список с данными об ожидающих посетителях</param>
         private void Sort(List<QueueRecord> recordsAll)
         {
-            listBox1.Items.Clear();
-            listBox2.Items.Clear();
-
-            foreach (QueueRecord record in recordsAll)
+            Invoke((MethodInvoker)delegate
             {
-                if (!record.Competing)
-                {
-                    listBox1.Items.Add(record);
-                }
-                else
-                {
-                    listBox2.Items.Add(record);
-                }
-            }
+                listBox1.Items.Clear();
+                listBox2.Items.Clear();
 
-            button1.Enabled = listBox1.Items.Count > 0;
+                foreach (QueueRecord record in recordsAll)
+                {
+                    if (!record.Competing)
+                    {
+                        listBox1.Items.Add(record);
+                    }
+                    else
+                    {
+                        listBox2.Items.Add(record);
+                    }
+                }
+
+                button1.Enabled = listBox1.Items.Count > 0;
+            });
         }
 
         /// <summary>
@@ -95,8 +99,16 @@ namespace QueueServiceAdmin
             SwitchControls(false);
             //настраиваем подключение
             _connection = new HubConnectionBuilder()//настраиваем подключение
-                .WithUrl($"{_settings.ServerAddress}/queues/signalr")
+                .WithUrl($"{_settings.ServerAddress}/queues/signalr", options =>
+                {
+                    options.Credentials = CredentialCache.DefaultCredentials;
+                    options.Proxy = new WebProxy()
+                    {
+                        Credentials = CredentialCache.DefaultCredentials
+                    };
+                })
                 .Build();
+            
 
             //определяем методы клиента SignalR
             _connection.On<bool, QueueRecord>("RequestResult", (x, y) => RequestResult(x, y));
@@ -105,7 +117,7 @@ namespace QueueServiceAdmin
             try
             {
                 await _connection.StartAsync();
-                await _connection.SendAsync("GetQueues",false)
+                await _connection.SendAsync("GetQueues", false)
                     .ContinueWith(delegate { SwitchControls(true); });
             }
             catch (Exception e)
@@ -145,11 +157,14 @@ namespace QueueServiceAdmin
         /// <param name="enabled">true - элементы UI активны, false - элементы UI неактивны. </param>
         private void SwitchControls(bool enabled)
         {
-            button1.Enabled = enabled ? listBox1.Items.Count > 0 : false;
-            button2.Enabled = enabled ? listBox2.SelectedIndex != -1 : false;
-            listBox1.Enabled = enabled;
-            listBox2.Enabled = enabled;
-            Text = enabled ? $"Приложение для сотрудника {EmplName}" : "Ожидание...";
+            Invoke((MethodInvoker)delegate
+            {
+                button1.Enabled = enabled ? listBox1.Items.Count > 0 : false;
+                button2.Enabled = enabled ? listBox2.SelectedIndex != -1 : false;
+                listBox1.Enabled = enabled;
+                listBox2.Enabled = enabled;
+                Text = enabled ? $"Приложение для сотрудника {EmplName}" : "Ожидание...";
+            });
         }
     }
 }
