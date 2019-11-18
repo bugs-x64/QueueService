@@ -107,6 +107,7 @@ namespace QueueServiceAdmin
                         Credentials = CredentialCache.DefaultCredentials
                     };
                 })
+                .WithAutomaticReconnect()
                 .Build();
             
 

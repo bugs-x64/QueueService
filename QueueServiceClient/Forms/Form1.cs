@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using QueueServiceClient.Main;
 using System;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -122,7 +123,15 @@ namespace QueueServiceClient
             SwitchControls(false);
             //настраиваем подключение
             _connection = new HubConnectionBuilder()//настраиваем подключение
-                .WithUrl($"{_settings.ServerAddress}/queues/signalr")
+                .WithUrl($"{_settings.ServerAddress}/queues/signalr", options =>
+                {
+                    options.Credentials = CredentialCache.DefaultCredentials;
+                    options.Proxy = new WebProxy()
+                    {
+                        Credentials = CredentialCache.DefaultCredentials
+                    };
+                })                
+                .WithAutomaticReconnect()
                 .Build();
 
             //определяем методы клиента SignalR
@@ -141,11 +150,14 @@ namespace QueueServiceClient
 
         private void SwitchControls(bool enabled)
         {
-            button1.Enabled = enabled;
-            textBox1.Enabled = enabled;
-            radioButton1.Enabled = enabled;
-            radioButton2.Enabled = enabled;
-            Text = enabled ? "Приложение для посетителя" : "Ожидание...";
+            Invoke((MethodInvoker)delegate
+            {
+                button1.Enabled = enabled;
+                textBox1.Enabled = enabled;
+                radioButton1.Enabled = enabled;
+                radioButton2.Enabled = enabled;
+                Text = enabled ? "Приложение для посетителя" : "Ожидание...";
+            });
         }
     }
 }

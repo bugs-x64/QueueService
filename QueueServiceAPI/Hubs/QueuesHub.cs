@@ -23,15 +23,15 @@ namespace QueueServiceAPI.Hubs
         private async Task<List<QueueRecord>> GetQueuesData()
         {
             return await (from record in _context.Queues
-                                                join client in _context.Clients on record.Clientid equals client.Id
-                                                where record.Employeeid == 0
-                                                select new QueueRecord()
-                                                {
-                                                    RecId = record.Id,
-                                                    Fio = client.Fio,
-                                                    Competing = record.Competing
-                                                }
-                                 ).ToListAsync();
+                          join client in _context.Clients on record.Clientid equals client.Id
+                          where record.Employeeid == 0
+                          select new QueueRecord()
+                          {
+                              RecId = record.Id,
+                              Fio = client.Fio,
+                              Competing = record.Competing
+                          }
+                          ).ToListAsync();
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace QueueServiceAPI.Hubs
         public async Task GetQueues(bool all)
         {
             if (all)
-                await Clients.All.SendAsync("QueuesUpdate", GetQueuesData());
+                await Clients.All.SendAsync("QueuesUpdate", await GetQueuesData());
             else
             {
                 /* ============================================================
@@ -53,7 +53,7 @@ namespace QueueServiceAPI.Hubs
                  * ============================================================
                  */
                 Thread.Sleep(Config.SyntheticDelayMilliseconds);
-                await Clients.Caller.SendAsync("QueuesUpdate", GetQueuesData());
+                await Clients.Caller.SendAsync("QueuesUpdate", await GetQueuesData());
             }
         }
 
