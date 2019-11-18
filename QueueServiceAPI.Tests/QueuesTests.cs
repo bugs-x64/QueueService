@@ -25,8 +25,7 @@ namespace QueueServiceAPI.Tests
         public async Task GetQueues()
         {
             //array
-            var id = 4;
-            var fio = "евсей";
+            var fio = "евсей";//check your DB
 
             //act
             var response1 = await _client.GetAsync("/api/queues");
@@ -34,7 +33,7 @@ namespace QueueServiceAPI.Tests
 
             //assert
             response1.EnsureSuccessStatusCode();
-            Assert.Contains($"{{\"recid\":{id},\"fio\":\"{fio}\",\"competing\":true}}", responseContent1);
+            Assert.Contains($"\"fio\":\"{fio}\",\"competing\":true}}", responseContent1);
         }
 
         [Fact]
@@ -44,7 +43,7 @@ namespace QueueServiceAPI.Tests
             var fio1 = "евсей";
             var fio2 = "другойевсей";
             var competing = true;
-            var notcompeting = true;
+            var notcompeting = false;
 
             //act
             var response1 = await _client.PostAsync(
@@ -72,11 +71,11 @@ namespace QueueServiceAPI.Tests
         public async Task PickFromQueue()
         {
             //array
-            var empoyeeid = 1;
-            var queueid = 4;
+            var empoyeeid = 1;//check your DB
+            var queueid = 2;//check your DB
 
             //act
-            var response1 = await _client.PostAsync(
+            var response1 = await _client.PutAsync(
                requestUri: $"/api/queues/{queueid}",
                content: new StringContent(
                    content: $"{empoyeeid}",
@@ -87,6 +86,7 @@ namespace QueueServiceAPI.Tests
             //assert
             response1.EnsureSuccessStatusCode();
         }
+
         [Fact]
         public async Task PickNextFromQueue()
         {
@@ -106,25 +106,6 @@ namespace QueueServiceAPI.Tests
             response1.EnsureSuccessStatusCode();
         }
 
-        [Fact]
-        public async Task ClientIsHandled()
-        {
-            //array
-            var empoyeeid = 1;
-            var queueid = 4;
-
-            //act
-            var response1 = await _client.PostAsync(
-               requestUri: $"/api/queues/{queueid}/handled",
-               content: new StringContent(
-                   content: $"{empoyeeid}",
-                   encoding: Encoding.UTF8,
-                   mediaType: "application/json"
-               ));
-
-            //assert
-            response1.EnsureSuccessStatusCode();
-        }
 
     }
 }

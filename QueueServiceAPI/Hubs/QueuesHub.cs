@@ -52,7 +52,7 @@ namespace QueueServiceAPI.Hubs
                  * то другие методы будут выполняться 20 секунд
                  * ============================================================
                  */
-                Thread.Sleep(10 * 1000);
+                Thread.Sleep(Config.SyntheticDelayMilliseconds);
                 await Clients.Caller.SendAsync("QueuesUpdate", GetQueuesData());
             }
         }
@@ -64,7 +64,7 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task GetNext(int employeeid)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             var datalist = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   orderby record.Id ascending
@@ -112,7 +112,7 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task GetSelected(int recordid, int employeeid)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (!QueuesExists(recordid))
             {
                 await Clients.Caller.SendAsync("RequestResult", false, null);
@@ -165,7 +165,7 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task CreateRecord(string fio, bool c)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (fio == "" || fio is null)
             {
                 await Clients.Caller.SendAsync("SendingStatus", false);

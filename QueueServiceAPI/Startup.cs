@@ -29,7 +29,7 @@ namespace QueueServiceAPI
                 .AddJsonFile("appsettings.json", optional: true)
                 .Build();
             services.AddDbContext<qsdbContext>(options => options.UseSqlServer(config.GetConnectionString("qsdb")));
-
+            Config.SetSyntheticDelayMilliseconds(config.GetValue<int>("SyntheticDelayMilliseconds"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

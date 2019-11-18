@@ -23,7 +23,7 @@ namespace QueueServiceAPI.Tests
         public async Task Authentication()
         {
             //array
-            var existuser = "евсей";
+            var existuser = "евсейтест";
             var noexistuser = "евсей" + DateTime.Now.Millisecond*DateTime.Now.Millisecond;
 
             //act
@@ -48,7 +48,7 @@ namespace QueueServiceAPI.Tests
             //assert
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
-            Assert.Contains($"{{\"id\":1,\"fio\":\"{existuser}\"", responseContent1);
+            Assert.Contains($"\"fio\":\"{existuser}\"", responseContent1);
             Assert.Contains($"\"fio\":\"{noexistuser}\"", responseContent2);
         }
 

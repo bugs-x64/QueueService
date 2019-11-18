@@ -25,7 +25,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetQueues()
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             var response = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   where record.Employeeid == 0
@@ -44,7 +44,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost("next")]
         public async Task<ActionResult<string>> GetNext([FromBody] int employeeid)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             var datalist = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   orderby record.Id ascending
@@ -87,7 +87,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PickClient(int id, [FromBody] int employeeid)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (!QueuesExists(id))
             {
                 return NotFound();
@@ -96,39 +96,6 @@ namespace QueueServiceAPI.Controllers
             record.Employeeid = employeeid;
             _context.Entry(record).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!QueuesExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // PUT: api/Queues/5/handled
-        // сотрудник отмечает, что клиент обслужен
-        [HttpPut("{id}/handled")]
-        public async Task<IActionResult> ClientisHandled(int id, [FromBody] int employeeid)
-        {
-            Thread.Sleep(10 * 1000);
-            if (!QueuesExists(id))
-            {
-                return NotFound();
-            }
-            Queues record = await _context.Queues.FindAsync(id);
-            record.Employeeid = employeeid;
-            record.Handled = true;
-            _context.Entry(record).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
@@ -153,7 +120,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> PostQueues([FromBody] string fio, bool c)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (fio == "" || fio is null)
             {
                 return BadRequest();
@@ -167,7 +134,7 @@ namespace QueueServiceAPI.Controllers
                 _context.Clients.Add(client);
             }
 
-            Queues queues = new Queues() { Client = client, Competing = c };
+            Queues queues = new Queues() { Client = client, Competing = c, Id = 0 };
 
             _context.Queues.Add(queues);
             await _context.SaveChangesAsync();

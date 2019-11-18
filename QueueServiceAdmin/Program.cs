@@ -6,7 +6,6 @@ using System.Windows.Forms;
 
 namespace QueueServiceAdmin
 {
-    //TODO: написать приложение для оператора
     static class Program
     {
         /// <summary>

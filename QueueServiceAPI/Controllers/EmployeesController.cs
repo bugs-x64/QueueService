@@ -21,7 +21,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetAllEmployees()
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             var response = await (from empl in _context.Employees
                                   orderby empl.Fio ascending
                                   select new
@@ -35,7 +35,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetEmployee(string fio)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             Employees employees = await _context.Employees.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (employees == null)
@@ -56,7 +56,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetEmployees(string fio)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (fio is null || fio == "")
             {
                 return await GetAllEmployees();
@@ -72,7 +72,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<string>> GetEmployees(int id)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             Employees employees = await _context.Employees.FindAsync(id);
 
             if (employees == null)
@@ -94,7 +94,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> PostEmployees([FromBody]Employees employees)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             _context.Employees.Add(employees);
             await _context.SaveChangesAsync();
 
@@ -108,7 +108,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost("auth")]
         public async Task<ActionResult<string>> Auth([FromBody]Employees employees)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (await _context.Employees.AnyAsync(x => x.Fio == employees.Fio))
             {
                 return await GetEmployee(fio: employees.Fio);
@@ -117,7 +117,6 @@ namespace QueueServiceAPI.Controllers
             {
                 return await PostEmployees(employees);
             };
-            //return CreatedAtAction("GetEmployees", new { id = employees.Id }, employees);
         }
     }
 }

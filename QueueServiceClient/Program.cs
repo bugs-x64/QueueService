@@ -6,7 +6,6 @@ using System.Windows.Forms;
 
 namespace QueueServiceClient
 {
-    //TODO: написать приложение для клиента
     static class Program
     {
         /// <summary>

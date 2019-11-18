@@ -21,7 +21,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetAllClients()
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             var response = await (from empl in _context.Clients
                                   orderby empl.Fio ascending
                                   select new
@@ -35,7 +35,7 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetClient(string fio)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             Clients clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (clients == null)
@@ -56,7 +56,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetClients(string fio)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (fio is null || fio == "")
             {
                 return await GetAllClients();
@@ -72,7 +72,7 @@ namespace QueueServiceAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<string>> GetClients(int id)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             Clients clients = await _context.Clients.FindAsync(id);
 
             if (clients == null)
@@ -94,7 +94,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> PostClients([FromBody]Clients clients)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             _context.Clients.Add(clients);
             await _context.SaveChangesAsync();
 
@@ -108,7 +108,7 @@ namespace QueueServiceAPI.Controllers
         [HttpPost("auth")]
         public async Task<ActionResult<string>> Auth([FromBody]Clients clients)
         {
-            Thread.Sleep(10 * 1000);
+            Thread.Sleep(Config.SyntheticDelayMilliseconds);
             if (await _context.Clients.AnyAsync(x => x.Fio == clients.Fio))
             {
                 return await GetClient(fio: clients.Fio);
@@ -117,7 +117,6 @@ namespace QueueServiceAPI.Controllers
             {
                 return await PostClients(clients);
             };
-            //return CreatedAtAction("GetClients", new { id = clients.Id }, clients);
         }
     }
 }
