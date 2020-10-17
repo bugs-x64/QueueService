@@ -1,24 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace QueueServiceAPI.Models
+﻿namespace QueueServiceAPI.Models
 {
     /// <summary>
-    /// Класс представляет запись в очереди
+    /// Дто записи в очередь.
     /// </summary>
-    public class QueueRecord
+    public class QueueRecordDto
     {
         /// <summary>
         /// Номер записи
         /// </summary>
-        public int RecId { get; set; }
+        public int Id { get; set; }
+
         /// <summary>
         /// ФИО клиента
         /// </summary>
         public string Fio { get; set; }
+
         /// <summary>
         /// Конкурирующая очередь
         /// </summary>

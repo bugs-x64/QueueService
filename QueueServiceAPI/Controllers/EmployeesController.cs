@@ -12,16 +12,16 @@ namespace QueueServiceAPI.Controllers
     [ApiController]
     public class EmployeesController : ControllerBase
     {
-        private readonly qsdbContext _context;
+        private readonly QueueServiceDbContext _context;
 
-        public EmployeesController(qsdbContext context)
+        public EmployeesController(QueueServiceDbContext context)
         {
             _context = context;
         }
 
         private async Task<ActionResult<string>> GetAllEmployees()
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             var response = await (from empl in _context.Employees
                                   orderby empl.Fio ascending
                                   select new
@@ -35,28 +35,28 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetEmployee(string fio)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            Employees employees = await _context.Employees.FirstOrDefaultAsync(x => x.Fio == fio);
+            Thread.Sleep(Config.SyntheticDelay);
+            Employee employee = await _context.Employees.FirstOrDefaultAsync(x => x.Fio == fio);
 
-            if (employees == null)
+            if (employee == null)
             {
                 return NotFound();
             }
 
             return JsonConvert.SerializeObject(new
             {
-                id = employees.Id,
-                fio = employees.Fio
+                id = employee.Id,
+                fio = employee.Fio
             },
             new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
-        // GET: api/Employees
+        // GET: api/Employee
         //получить список сотрудников
         [HttpGet]
         public async Task<ActionResult<string>> GetEmployees(string fio)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (fio is null || fio == "")
             {
                 return await GetAllEmployees();
@@ -67,55 +67,55 @@ namespace QueueServiceAPI.Controllers
             }
         }
 
-        // GET: api/Employees/5
+        // GET: api/Employee/5
         //получить информацию о сотруднике по id
         [HttpGet("{id}")]
         public async Task<ActionResult<string>> GetEmployees(int id)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            Employees employees = await _context.Employees.FindAsync(id);
+            Thread.Sleep(Config.SyntheticDelay);
+            Employee employee = await _context.Employees.FindAsync(id);
 
-            if (employees == null)
+            if (employee == null)
             {
                 return NotFound();
             }
 
             return JsonConvert.SerializeObject(new
             {
-                id = employees.Id,
-                fio = employees.Fio
+                id = employee.Id,
+                fio = employee.Fio
             },
             new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
 
-        // POST: api/Employees
+        // POST: api/Employee
         // добавить нового сотрудника
         [HttpPost]
-        public async Task<ActionResult<string>> PostEmployees([FromBody]Employees employees)
+        public async Task<ActionResult<string>> PostEmployees([FromBody]Employee employee)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            _context.Employees.Add(employees);
+            Thread.Sleep(Config.SyntheticDelay);
+            _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEmployees", new { id = employees.Id }, employees);
+            return CreatedAtAction("GetEmployees", new { id = employee.Id }, employee);
         }
 
 
 
-        // POST: api/Employees
+        // POST: api/Employee
         // авторизация сотрудника
         [HttpPost("auth")]
-        public async Task<ActionResult<string>> Auth([FromBody]Employees employees)
+        public async Task<ActionResult<string>> Auth([FromBody]Employee employee)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            if (await _context.Employees.AnyAsync(x => x.Fio == employees.Fio))
+            Thread.Sleep(Config.SyntheticDelay);
+            if (await _context.Employees.AnyAsync(x => x.Fio == employee.Fio))
             {
-                return await GetEmployee(fio: employees.Fio);
+                return await GetEmployee(fio: employee.Fio);
             }
             else
             {
-                return await PostEmployees(employees);
+                return await PostEmployees(employee);
             };
         }
     }

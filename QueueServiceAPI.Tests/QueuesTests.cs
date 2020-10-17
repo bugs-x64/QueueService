@@ -25,7 +25,7 @@ namespace QueueServiceAPI.Tests
         public async Task GetQueues()
         {
             //array
-            var fio = "евсей";//check your DB
+            var fio = "evsey";//check your DB
 
             //act
             var response1 = await _client.GetAsync("/api/queues");
@@ -40,8 +40,8 @@ namespace QueueServiceAPI.Tests
         public async Task Enqueue()
         {
             //array
-            var fio1 = "евсей";
-            var fio2 = "другойевсей";
+            var fio1 = "evsey";
+            var fio2 = "другойevsey";
             var competing = true;
             var notcompeting = false;
 

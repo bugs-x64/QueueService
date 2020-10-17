@@ -13,19 +13,19 @@ namespace QueueServiceAPI.Controllers
     [ApiController]
     public class QueuesController : ControllerBase
     {
-        private readonly qsdbContext _context;
+        private readonly QueueServiceDbContext _context;
 
-        public QueuesController(qsdbContext context)
+        public QueuesController(QueueServiceDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Queues
+        // GET: api/Queue
         // получение списка клиентов в очереди
         [HttpGet]
         public async Task<ActionResult<string>> GetQueues()
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             var response = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   where record.Employeeid == 0
@@ -39,12 +39,12 @@ namespace QueueServiceAPI.Controllers
             return JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
-        // GET: api/Queues/next
+        // GET: api/Queue/next
         // получение списка клиентов в очереди
         [HttpPost("next")]
         public async Task<ActionResult<string>> GetNext([FromBody] int employeeid)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             var datalist = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   orderby record.Id ascending
@@ -82,17 +82,17 @@ namespace QueueServiceAPI.Controllers
         }
 
 
-        // PUT: api/Queues/5
+        // PUT: api/Queue/5
         // сотрудник забирает клиента из очереди
         [HttpPut("{id}")]
         public async Task<IActionResult> PickClient(int id, [FromBody] int employeeid)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (!QueuesExists(id))
             {
                 return NotFound();
             }
-            Queues record = await _context.Queues.FindAsync(id);
+            Queue record = await _context.Queues.FindAsync(id);
             record.Employeeid = employeeid;
             _context.Entry(record).State = EntityState.Modified;
 
@@ -115,28 +115,28 @@ namespace QueueServiceAPI.Controllers
             return NoContent();
         }
 
-        // POST: api/Queues
+        // POST: api/Queue
         // встать в очередь
         [HttpPost]
         public async Task<IActionResult> PostQueues([FromBody] string fio, bool c)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (fio == "" || fio is null)
             {
                 return BadRequest();
             }
 
-            Clients client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Client client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (client is null)
             {
-                client = new Clients() { Fio = fio };
+                client = new Client() { Fio = fio };
                 _context.Clients.Add(client);
             }
 
-            Queues queues = new Queues() { Client = client, Competing = c, Id = 0 };
+            Queue queue = new Queue() { Client = client, Competing = c, Id = 0 };
 
-            _context.Queues.Add(queues);
+            _context.Queues.Add(queue);
             await _context.SaveChangesAsync();
 
             return Ok();

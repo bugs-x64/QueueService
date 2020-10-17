@@ -12,16 +12,16 @@ namespace QueueServiceAPI.Controllers
     [ApiController]
     public class ClientsController : ControllerBase
     {
-        private readonly qsdbContext _context;
+        private readonly QueueServiceDbContext _context;
 
-        public ClientsController(qsdbContext context)
+        public ClientsController(QueueServiceDbContext context)
         {
             _context = context;
         }
 
         private async Task<ActionResult<string>> GetAllClients()
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             var response = await (from empl in _context.Clients
                                   orderby empl.Fio ascending
                                   select new
@@ -35,28 +35,28 @@ namespace QueueServiceAPI.Controllers
 
         private async Task<ActionResult<string>> GetClient(string fio)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            Clients clients = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Thread.Sleep(Config.SyntheticDelay);
+            Client client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
-            if (clients == null)
+            if (client == null)
             {
                 return NotFound();
             }
 
             return JsonConvert.SerializeObject(new
             {
-                id = clients.Id,
-                fio = clients.Fio
+                id = client.Id,
+                fio = client.Fio
             },
             new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
-        // GET: api/Clients
+        // GET: api/Client
         //получить список сотрудников
         [HttpGet]
         public async Task<ActionResult<string>> GetClients(string fio)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (fio is null || fio == "")
             {
                 return await GetAllClients();
@@ -67,55 +67,55 @@ namespace QueueServiceAPI.Controllers
             }
         }
 
-        // GET: api/Clients/5
+        // GET: api/Client/5
         //получить информацию о сотруднике по id
         [HttpGet("{id}")]
         public async Task<ActionResult<string>> GetClients(int id)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            Clients clients = await _context.Clients.FindAsync(id);
+            Thread.Sleep(Config.SyntheticDelay);
+            Client client = await _context.Clients.FindAsync(id);
 
-            if (clients == null)
+            if (client == null)
             {
                 return NotFound();
             }
 
             return JsonConvert.SerializeObject(new
             {
-                id = clients.Id,
-                fio = clients.Fio
+                id = client.Id,
+                fio = client.Fio
             },
             new JsonSerializerSettings { Formatting = Formatting.None });
         }
 
 
-        // POST: api/Clients
+        // POST: api/Client
         // добавить нового сотрудника
         [HttpPost]
-        public async Task<ActionResult<string>> PostClients([FromBody]Clients clients)
+        public async Task<ActionResult<string>> PostClients([FromBody]Client client)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            _context.Clients.Add(clients);
+            Thread.Sleep(Config.SyntheticDelay);
+            _context.Clients.Add(client);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetClients", new { id = clients.Id }, clients);
+            return CreatedAtAction("GetClients", new { id = client.Id }, client);
         }
 
 
 
-        // POST: api/Clients
+        // POST: api/Client
         // авторизация
         [HttpPost("auth")]
-        public async Task<ActionResult<string>> Auth([FromBody]Clients clients)
+        public async Task<ActionResult<string>> Auth([FromBody]Client client)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
-            if (await _context.Clients.AnyAsync(x => x.Fio == clients.Fio))
+            Thread.Sleep(Config.SyntheticDelay);
+            if (await _context.Clients.AnyAsync(x => x.Fio == client.Fio))
             {
-                return await GetClient(fio: clients.Fio);
+                return await GetClient(fio: client.Fio);
             }
             else
             {
-                return await PostClients(clients);
+                return await PostClients(client);
             };
         }
     }

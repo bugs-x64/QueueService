@@ -55,7 +55,7 @@ namespace QueueServiceAdmin
             if (listBox2.SelectedIndex == -1) return;
             SwitchControls(false);
             var recid = ((QueueRecord)listBox2.Items[listBox2.SelectedIndex]).RecId;
-            await _connection.SendAsync("GetSelected", recid, 1);
+            await _connection.InvokeAsync("GetSelected", recid, 1);
         }
 
         //вызов метода происходит, если сотрудник выбирает посетителя из конкурирующего списка
@@ -160,8 +160,8 @@ namespace QueueServiceAdmin
         {
             Invoke((MethodInvoker)delegate
             {
-                button1.Enabled = enabled ? listBox1.Items.Count > 0 : false;
-                button2.Enabled = enabled ? listBox2.SelectedIndex != -1 : false;
+                button1.Enabled = enabled && listBox1.Items.Count > 0;
+                button2.Enabled = enabled && listBox2.SelectedIndex != -1;
                 listBox1.Enabled = enabled;
                 listBox2.Enabled = enabled;
                 Text = enabled ? $"Приложение для сотрудника {EmplName}" : "Ожидание...";

@@ -10,24 +10,24 @@ namespace QueueServiceAPI.Hubs
 {
     public class QueuesHub : Hub
     {
-        private readonly qsdbContext _context;
-        public QueuesHub()
+        private readonly QueueServiceDbContext _context;
+        public QueuesHub(QueueServiceDbContext context)
         {
-            _context = new qsdbContext();
+            _context = context;
         }
 
         /// <summary>
         /// Получить список клиентов в очереди из БД
         /// </summary>
         /// <returns></returns>
-        private async Task<List<QueueRecord>> GetQueuesData()
+        private async Task<List<QueueRecordDto>> GetQueuesData()
         {
             return await (from record in _context.Queues
                           join client in _context.Clients on record.Clientid equals client.Id
                           where record.Employeeid == 0
-                          select new QueueRecord()
+                          select new QueueRecordDto()
                           {
-                              RecId = record.Id,
+                              Id = record.Id,
                               Fio = client.Fio,
                               Competing = record.Competing
                           }
@@ -45,14 +45,16 @@ namespace QueueServiceAPI.Hubs
                 await Clients.All.SendAsync("QueuesUpdate", await GetQueuesData());
             else
             {
-                /* ============================================================
+                /*
+                 * ============================================================
                  * В данном методе задержка стоит только здесь
                  * т.к. all == true используется только при вызове других методов. 
                  * Если оставить в начале выполнения метода, 
                  * то другие методы будут выполняться 20 секунд
                  * ============================================================
                  */
-                Thread.Sleep(Config.SyntheticDelayMilliseconds);
+
+                Thread.Sleep(Config.SyntheticDelay);
                 await Clients.Caller.SendAsync("QueuesUpdate", await GetQueuesData());
             }
         }
@@ -64,7 +66,7 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task GetNext(int employeeid)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             var datalist = await (from record in _context.Queues
                                   join client in _context.Clients on record.Clientid equals client.Id
                                   orderby record.Id ascending
@@ -94,9 +96,9 @@ namespace QueueServiceAPI.Hubs
                 throw;
             }
 
-            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecord()
+            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecordDto()
             {
-                RecId = result.record.Id,
+                Id = result.record.Id,
                 Fio = result.client.Fio,
                 Competing = result.record.Competing
             });
@@ -112,7 +114,7 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task GetSelected(int recordid, int employeeid)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (!QueuesExists(recordid))
             {
                 await Clients.Caller.SendAsync("RequestResult", false, null);
@@ -148,9 +150,9 @@ namespace QueueServiceAPI.Hubs
                 }
             }
 
-            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecord()
+            await Clients.Caller.SendAsync("RequestResult", true, new QueueRecordDto()
             {
-                RecId = result.record.Id,
+                Id = result.record.Id,
                 Fio = result.client.Fio,
                 Competing = result.record.Competing
             });
@@ -165,24 +167,24 @@ namespace QueueServiceAPI.Hubs
         /// <returns></returns>
         public async Task CreateRecord(string fio, bool c)
         {
-            Thread.Sleep(Config.SyntheticDelayMilliseconds);
+            Thread.Sleep(Config.SyntheticDelay);
             if (fio == "" || fio is null)
             {
                 await Clients.Caller.SendAsync("SendingStatus", false);
                 return;
             }
 
-            Clients client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
+            Client client = await _context.Clients.FirstOrDefaultAsync(x => x.Fio == fio);
 
             if (client is null)
             {
-                client = new Clients() { Fio = fio };
+                client = new Client() { Fio = fio };
                 _context.Clients.Add(client);
             }
 
-            Queues queues = new Queues() { Client = client, Competing = c };
+            Queue queue = new Queue() { Client = client, Competing = c };
 
-            _context.Queues.Add(queues);
+            _context.Queues.Add(queue);
             await _context.SaveChangesAsync();
 
             await Clients.Caller.SendAsync("SendingStatus", true);

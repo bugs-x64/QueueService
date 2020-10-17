@@ -77,15 +77,18 @@ namespace QueueServiceClient
 
         private void TextBox1_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (char.IsLetter(e.KeyChar) || e.KeyChar == ' ' || e.KeyChar == (char)Keys.Back)
-            {
+            if (char.IsLetter(e.KeyChar) 
+                || e.KeyChar == ' ' 
+                || e.KeyChar == (char)Keys.Back)
                 return;
-            }
 
             e.Handled = true;
         }
 
-        private async void Button1_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Встать в очередь.
+        /// </summary>
+        private async void EnqueueButton_Click(object sender, EventArgs e)
         {
             SwitchControls(false);
             if (CheckName(textBox1.Text) is null)
@@ -152,7 +155,7 @@ namespace QueueServiceClient
         {
             Invoke((MethodInvoker)delegate
             {
-                button1.Enabled = enabled;
+                EnqueueButton.Enabled = enabled;
                 textBox1.Enabled = enabled;
                 radioButton1.Enabled = enabled;
                 radioButton2.Enabled = enabled;

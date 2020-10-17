@@ -23,8 +23,8 @@ namespace QueueServiceAPI.Tests
         public async Task Authentication()
         {
             //array
-            var existuser = "евсейтест";
-            var noexistuser = "евсей" + DateTime.Now.Millisecond*DateTime.Now.Millisecond;
+            var existuser = "evseyтест";
+            var noexistuser = "evsey" + DateTime.Now.Millisecond*DateTime.Now.Millisecond;
 
             //act
             var response1 = await _client.PostAsync(
@@ -56,7 +56,7 @@ namespace QueueServiceAPI.Tests
         public async Task GetUsers()
         {
             //array
-            var name = "евсей";
+            var name = "evsey";
             var id = 1;
 
             //act
@@ -85,7 +85,7 @@ namespace QueueServiceAPI.Tests
         public async Task GetUsersFail()
         {
             //array
-            var name = "евсей"+DateTime.Now.Millisecond* DateTime.Now.Millisecond* DateTime.Now.Millisecond;
+            var name = "evsey"+DateTime.Now.Millisecond* DateTime.Now.Millisecond* DateTime.Now.Millisecond;
             var id = -1;
 
             //act
